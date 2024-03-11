@@ -1,0 +1,189 @@
+CREATE DATABASE LibraryManagementSystem;
+USE LibraryManagementSystem;
+
+-- Create Tables
+CREATE TABLE Books (
+    BookID INT PRIMARY KEY AUTO_INCREMENT,
+    Title VARCHAR(100) NOT NULL,
+    Author VARCHAR(100) NOT NULL,
+    Genre VARCHAR(50),
+    ISBN VARCHAR(20) UNIQUE,
+    TotalCopies INT NOT NULL,
+    AvailableCopies INT NOT NULL
+);
+
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    Phone VARCHAR(15),
+    Address VARCHAR(200)
+);
+
+CREATE TABLE Transactions (
+    TransactionID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    BookID INT,
+    BorrowDate DATE,
+    ReturnDate DATE,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Insert Sample Data
+INSERT INTO Books (Title, Author, Genre, ISBN, TotalCopies, AvailableCopies)
+VALUES
+    ('To Kill a Mockingbird', 'Harper Lee', 'Fiction', '9780061120084', 5, 5),
+    ('1984', 'George Orwell', 'Science Fiction', '9780451524935', 8, 8),
+    ('The Great Gatsby', 'F. Scott Fitzgerald', 'Fiction', '9780743273565', 10, 10),
+    ('Pride and Prejudice', 'Jane Austen', 'Romance', '9780141439518', 6, 6);
+
+INSERT INTO Users (Name, Email, Phone, Address)
+VALUES
+    ('Alice Johnson', 'alice@example.com', '123-456-7890', '123 Main St, City'),
+    ('Bob Smith', 'bob@example.com', '987-654-3210', '456 Elm St, Town'),
+    ('Charlie Brown', 'charlie@example.com', '555-123-4567', '789 Oak St, Village');
+
+INSERT INTO Transactions (UserID, BookID, BorrowDate, ReturnDate)
+VALUES
+    (1, 1, '2024-03-01', '2024-03-15'),
+    (2, 3, '2024-02-15', '2024-03-01'),
+    (3, 2, '2024-02-20', '2024-03-05');
+
+-- Sample Queries
+
+-- 1. Retrieve all books
+SELECT * FROM Books;
+
+-- 2. Retrieve books with available copies
+SELECT * FROM Books WHERE AvailableCopies > 0;
+
+-- 3. Retrieve users who borrowed books
+SELECT Users.Name, Books.Title, Transactions.BorrowDate, Transactions.ReturnDate
+FROM Users
+JOIN Transactions ON Users.UserID = Transactions.UserID
+JOIN Books ON Transactions.BookID = Books.BookID;
+
+-- 4. Retrieve overdue books
+SELECT Users.Name, Books.Title, Transactions.BorrowDate, Transactions.ReturnDate
+FROM Users
+JOIN Transactions ON Users.UserID = Transactions.UserID
+JOIN Books ON Transactions.BookID = Books.BookID
+WHERE Transactions.ReturnDate < CURDATE();
+
+-- 5. Retrieve popular genres
+SELECT Genre, COUNT(*) AS TotalBooks
+FROM Books
+GROUP BY Genre
+ORDER BY TotalBooks DESC;
+
+-- 6. Retrieve users who borrowed a specific book
+SELECT Users.Name, Transactions.BorrowDate, Transactions.ReturnDate
+FROM Users
+JOIN Transactions ON Users.UserID = Transactions.UserID
+JOIN Books ON Transactions.BookID = Books.BookID
+WHERE Books.Title = 'To Kill a Mockingbird';
+
+-- Create Table for Authors
+CREATE TABLE Authors (
+    AuthorID INT PRIMARY KEY AUTO_INCREMENT,
+    AuthorName VARCHAR(100) NOT NULL
+);
+
+-- Create Table for Genres
+CREATE TABLE Genres (
+    GenreID INT PRIMARY KEY AUTO_INCREMENT,
+    GenreName VARCHAR(50) NOT NULL
+);
+
+-- Create Table for Publishers
+CREATE TABLE Publishers (
+    PublisherID INT PRIMARY KEY AUTO_INCREMENT,
+    PublisherName VARCHAR(100) NOT NULL,
+    Address VARCHAR(200),
+    Phone VARCHAR(15),
+    Email VARCHAR(100)
+);
+
+-- Create Table for Book-Copies
+CREATE TABLE BookCopies (
+    CopyID INT PRIMARY KEY AUTO_INCREMENT,
+    BookID INT,
+    Condition VARCHAR(50),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Create Table for Reviews
+CREATE TABLE Reviews (
+    ReviewID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    BookID INT,
+    Rating DECIMAL(2,1),
+    ReviewText TEXT,
+    ReviewDate DATE,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Create Table for Book-Authors (Many-to-Many Relationship)
+CREATE TABLE BookAuthors (
+    BookID INT,
+    AuthorID INT,
+    PRIMARY KEY (BookID, AuthorID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID),
+    FOREIGN KEY (AuthorID) REFERENCES Authors(AuthorID)
+);
+-- Insert sample data into Authors table
+INSERT INTO Authors (AuthorName) VALUES
+    ('Harper Lee'),
+    ('George Orwell'),
+    ('F. Scott Fitzgerald'),
+    ('Jane Austen');
+
+-- Insert sample data into Genres table
+INSERT INTO Genres (GenreName) VALUES
+    ('Fiction'),
+    ('Science Fiction'),
+    ('Romance'),
+    ('Mystery');
+
+-- Insert sample data into Publishers table
+INSERT INTO Publishers (PublisherName, Address, Phone, Email) VALUES
+    ('Penguin Random House', '123 Publishing St, City', '555-123-4567', 'info@penguin.com'),
+    ('HarperCollins', '456 Publishing Ave, Town', '777-456-7890', 'info@harpercollins.com'),
+    ('Simon & Schuster', '789 Publishing Blvd, Village', '888-789-1234', 'info@simonandschuster.com');
+
+-- Insert sample data into BookCopies table
+INSERT INTO BookCopies (BookID, Condition) VALUES
+    (1, 'Good'),
+    (1, 'Fair'),
+    (2, 'Excellent'),
+    (3, 'Good'),
+    (4, 'Fair');
+
+-- Insert sample data into Reviews table
+INSERT INTO Reviews (UserID, BookID, Rating, ReviewText, ReviewDate) VALUES
+    (1, 1, 4.5, 'A classic!', '2024-03-02'),
+    (2, 3, 5.0, 'Absolutely loved it!', '2024-02-17'),
+    (3, 2, 4.0, 'Interesting read.', '2024-02-25');
+
+-- Insert sample data into BookAuthors table
+INSERT INTO BookAuthors (BookID, AuthorID) VALUES
+    (1, 1),
+    (2, 2),
+    (3, 3),
+    (4, 4);
+
+SELECT * FROM Authors;
+SELECT * FROM Genres;
+SELECT * FROM Publishers;
+SELECT BookID, Condition FROM BookCopies;
+SELECT Users.Name AS UserName, Books.Title AS BookTitle, Reviews.Rating, Reviews.ReviewText, Reviews.ReviewDate
+FROM Users
+JOIN Reviews ON Users.UserID = Reviews.UserID
+JOIN Books ON Reviews.BookID = Books.BookID;
+SELECT Books.Title, GROUP_CONCAT(Authors.AuthorName SEPARATOR ', ') AS Authors
+FROM Books
+JOIN BookAuthors ON Books.BookID = BookAuthors.BookID
+JOIN Authors ON BookAuthors.AuthorID = Authors.AuthorID
+GROUP BY Books.Title;
